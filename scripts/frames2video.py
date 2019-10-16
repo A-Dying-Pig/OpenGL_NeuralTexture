@@ -1,7 +1,7 @@
 import cv2
 import os
 
-image_folder = 'vase_frames_2000'
+image_folder = 'frame'
 video_name = 'video.mp4'
 fps = 30
 

@@ -30,11 +30,11 @@ using namespace glm;
 #include <cnpy.h>
 
 
-int window_width = 512;
-int window_height = 384;
-int viewport_width = 512;
-int viewport_height = 384;
-bool enable_output = true;
+int window_width = 1024;
+int window_height = 768;
+int viewport_width = 1024;
+int viewport_height = 768;
+bool enable_output = false;
 int total_frame = 2000;
 
 char uv_output_dir[] = "output/uv/%04d.npy";
@@ -60,7 +60,7 @@ void saveImageViewNormal(const char * filename){
     int x = j * viewport_width * 3;
     int y = (viewport_height - 1 - j) * viewport_width * 3;
     for (int i = viewport_width * 3; i > 0; --i) {
-        uint8_t tmp = image_view_normal_data[x];
+        GLfloat tmp = image_view_normal_data[x];
         image_view_normal_data[x] = image_view_normal_data[y];
         image_view_normal_data[y] = tmp;
       	++x;
@@ -93,7 +93,7 @@ void saveImageUV(const char * filename){
     int x = j * viewport_width * 3;
     int y = (viewport_height - 1 - j) * viewport_width * 3;
     for (int i = viewport_width * 3; i > 0; --i) {
-        uint8_t tmp = image_uv_data[x];
+        GLfloat tmp = image_uv_data[x];
         image_uv_data[x] = image_uv_data[y];
         image_uv_data[y] = tmp;
       	++x;
