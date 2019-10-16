@@ -27,33 +27,39 @@ using namespace glm;
 #include "common/stb_image_write.h"
 
 //npy
-//#include "common/cnpy.h"
 #include <cnpy.h>
 
 
-int window_width = 1024;
-int window_height = 768;
+int window_width = 512;
+int window_height = 384;
+int viewport_width = 512;
+int viewport_height = 384;
+bool enable_output = true;
 int total_frame = 2000;
+
+char uv_output_dir[] = "output/uv/%04d.npy";
+char screenshot_output_dir[] = "output/frame/%04d.png";
+char view_normal_output_dir[] = "output/view_normal/%04d.npy";
+
+//Phone light
+struct Light {
+    vec3 direction;	//normalized; direction adjusted light direction
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
 
 
 void saveImageViewNormal(const char * filename){
-	GLint viewport[4];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-	int x = viewport[0];
-  int y = viewport[1];
-  int width = viewport[2];
-  int height = viewport[3];
-	//std::cout<<"x: "<<x<<" ,y: "<<y<<std::endl;
-
-	GLfloat * image_view_normal_data = new GLfloat[height * width * 3];
+	GLfloat * image_view_normal_data = new GLfloat[viewport_height * viewport_width * 3];
 	glReadBuffer(GL_COLOR_ATTACHMENT2);
-	glReadPixels(x, y, width, height, GL_RGB, GL_FLOAT, image_view_normal_data);
+	glReadPixels(0, 0, viewport_width, viewport_height, GL_RGB, GL_FLOAT, image_view_normal_data);
 
 	// invert pixels
-	for (int j = 0; j * 2 < height; ++j) {
-    int x = j * width * 3;
-    int y = (height - 1 - j) * width * 3;
-    for (int i = width * 3; i > 0; --i) {
+	for (int j = 0; j * 2 < viewport_height; ++j) {
+    int x = j * viewport_width * 3;
+    int y = (viewport_height - 1 - j) * viewport_width * 3;
+    for (int i = viewport_width * 3; i > 0; --i) {
         uint8_t tmp = image_view_normal_data[x];
         image_view_normal_data[x] = image_view_normal_data[y];
         image_view_normal_data[y] = tmp;
@@ -62,43 +68,31 @@ void saveImageViewNormal(const char * filename){
   	}
 	}
 
-	//std::ofstream out("view_normal.txt");
 	std::vector<float> data;
 	//write into files
-	for (int j = 0; j < height; j++){
-		for (int i = 0; i < width; i++){
-			int t = j * width * 3 + i * 3;
+	for (int j = 0; j < viewport_height; j++){
+		for (int i = 0; i < viewport_width; i++){
+			int t = j * viewport_width * 3 + i * 3;
 			data.push_back(image_view_normal_data[t]);
 			data.push_back(image_view_normal_data[t+1]);
 			data.push_back(image_view_normal_data[t+2]);
-			//out << image_view_normal_data[t]<<"/"<<image_view_normal_data[t+1]<<"/"<<image_view_normal_data[t+2]<<" ";
 		}
-		//out<<std::endl;
 	}
-	//out.close();
-	cnpy::npy_save(filename,&data[0],{(unsigned long)height,(unsigned long)width,3},"w");
+	cnpy::npy_save(filename,&data[0],{(unsigned long)viewport_height,(unsigned long)viewport_width,3},"w");
 	delete[] image_view_normal_data;
 }
 
 void saveImageUV(const char * filename){
-	GLint viewport[4];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-	int x = viewport[0];
-  int y = viewport[1];
-  int width = viewport[2];
-  int height = viewport[3];
-	//std::cout<<"x: "<<x<<" ,y: "<<y<<std::endl;
-
-	GLfloat * image_uv_data = new GLfloat[height * width * 3];
+	GLfloat * image_uv_data = new GLfloat[viewport_height * viewport_width * 3];
 
 	glReadBuffer(GL_COLOR_ATTACHMENT1);
-	glReadPixels(x, y, width, height, GL_RGB, GL_FLOAT, image_uv_data);
+	glReadPixels(0, 0, viewport_width, viewport_height, GL_RGB, GL_FLOAT, image_uv_data);
 
 	// invert pixels
-	for (int j = 0; j * 2 < height; ++j) {
-    int x = j * width * 3;
-    int y = (height - 1 - j) * width * 3;
-    for (int i = width * 3; i > 0; --i) {
+	for (int j = 0; j * 2 < viewport_height; ++j) {
+    int x = j * viewport_width * 3;
+    int y = (viewport_height - 1 - j) * viewport_width * 3;
+    for (int i = viewport_width * 3; i > 0; --i) {
         uint8_t tmp = image_uv_data[x];
         image_uv_data[x] = image_uv_data[y];
         image_uv_data[y] = tmp;
@@ -107,50 +101,34 @@ void saveImageUV(const char * filename){
   	}
 	}
 
-	//std::ofstream out("uv.txt");
 	std::vector<float> data;
 	//write into files
-	for (int j = 0; j < height; j++){
-		for (int i = 0; i < width; i++){
-			int t = j * width * 3 + i * 3;
+	for (int j = 0; j < viewport_height; j++){
+		for (int i = 0; i < viewport_width; i++){
+			int t = j * viewport_width * 3 + i * 3;
 			data.push_back(image_uv_data[t]);
 			data.push_back(image_uv_data[t+1]);
-			//out << image_uv_data[t]<<"/"<<image_uv_data[t+1]<<" ";
 		}
-		//out<<std::endl;
 	}
-	//out.close();
-	cnpy::npy_save(filename,&data[0],{(unsigned long)height,(unsigned long)width,2},"w");
+	cnpy::npy_save(filename,&data[0],{(unsigned long)viewport_height,(unsigned long)viewport_width,2},"w");
 	delete[] image_uv_data;
 }
 
 
 
-void saveScreenshot(const char *filename,int originID)
+void saveScreenshot(const char *filename)
 {
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    int x = viewport[0];
-    int y = viewport[1];
-    int width = viewport[2];
-    int height = viewport[3];
-
-		GLubyte * data = new GLubyte[height * width * 3];
-
-		// glBindTexture(GL_TEXTURE_2D, originID);
-    // glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		GLubyte * data = new GLubyte[viewport_height * viewport_width * 3];
 
 		glReadBuffer(GL_COLOR_ATTACHMENT0);
     // glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glReadPixels(0, 0, viewport_width, viewport_height, GL_RGB, GL_UNSIGNED_BYTE, data);
 
-		
 		// invert pixels
-		for (int j = 0; j * 2 < height; ++j) {
-    	int x = j * width * 3;
-    	int y = (height - 1 - j) * width * 3;
-    	for (int i = width * 3; i > 0; --i) {
+		for (int j = 0; j * 2 < viewport_height; ++j) {
+    	int x = j * viewport_width * 3;
+    	int y = (viewport_height - 1 - j) * viewport_width * 3;
+    	for (int i = viewport_width * 3; i > 0; --i) {
         	uint8_t tmp = data[x];
         	data[x] = data[y];
         	data[y] = tmp;
@@ -158,7 +136,7 @@ void saveScreenshot(const char *filename,int originID)
         	++y;
     	}
 		}
-  int saved = stbi_write_png(filename, width, height, 3, data, 0);
+  int saved = stbi_write_png(filename, viewport_width, viewport_height, 3, data, 0);
 
   delete[] data;
 
@@ -186,7 +164,9 @@ int main( void )
 		glfwTerminate();
 		return -1;
 	}
+	
 	glfwMakeContextCurrent(window);
+	
 
 	// Initialize GLEW
 	// glewExperimental = true; // Needed for core profile
@@ -207,14 +187,11 @@ int main( void )
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 	// Hide the mouse and enable unlimited mouvement
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // Set the mouse at the center of the screen
   //glfwPollEvents();
   //glfwSetCursorPos(window, 1024/2, 768/2);
-
-	// Accept fragment if it closer to the camera than the former one
-	glDepthFunc(GL_LESS); 
 
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
@@ -264,11 +241,8 @@ int main( void )
 	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
 
 
-	GLint viewport[4];
-  glGetIntegerv(GL_VIEWPORT, viewport);
-  int vp_width = viewport[2];
-  int vp_height = viewport[3];
-	//std::cout<<"view port width: "<<vp_width<<", height: "<<vp_height<<std::endl;
+	//view port
+	glViewport(0,0,viewport_width,viewport_height);
 	
 	// FRAME OUTPUT
 	//frame buffer
@@ -281,32 +255,39 @@ int main( void )
 	GLuint origin_color;
 	glGenTextures(1,&origin_color);
 	glBindTexture(GL_TEXTURE_2D,origin_color);
-	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB8, vp_width, vp_height, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB8, viewport_width, viewport_height, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,origin_color, 0);
 
 	//render buffer
 	GLuint rbo;
 	glGenRenderbuffers(1,&rbo);
 	glBindRenderbuffer(GL_RENDERBUFFER,rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, vp_width, vp_height);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, viewport_width, viewport_height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);  
 	
 	//image_uv output
 	GLuint  image_uv;
 	glGenTextures(1,&image_uv);
 	glBindTexture(GL_TEXTURE_2D, image_uv);
-	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB32F, vp_width, vp_height, 0,GL_RGB, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB32F, viewport_width, viewport_height, 0,GL_RGB, GL_FLOAT, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D,image_uv, 0);
 
 	//view direction output
 	GLuint view_normal;
 	glGenTextures(1,&view_normal);
 	glBindTexture(GL_TEXTURE_2D,view_normal);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB32F,vp_width,vp_height,0,GL_RGB,GL_FLOAT,0);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB32F,viewport_width,viewport_height,0,GL_RGB,GL_FLOAT,0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT2,GL_TEXTURE_2D,view_normal,0);
 
 	GLenum DrawBuffers[3] = {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2};
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);   
+
+	//PHONE LIGHT
+	Light light;
+	light.direction = normalize(vec3(-1.0f,0,0));
+	light.ambient = vec3(0.5,0.5,0.5);
+	light.diffuse = vec3(0.5,0.5,0.5);
+	light.specular = vec3(0.5,0.5,0.5);
 
 	// MATRIX
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
@@ -326,14 +307,10 @@ int main( void )
 	glm::vec3 yAxis(0,1,0);
 	//glm::mat4 Model      = 	translateMatrix * rotateMatrix;
 
-	// std::cout << glm::to_string(Projection) << std::endl;
-	// std::cout << glm::to_string(View) << std::endl;
-	// std::cout << glm::to_string(translateMatrix) << std::endl;
-	// std::cout << glm::to_string(rotateMatrix) << std::endl;
-
-
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
+		// Accept fragment if it closer to the camera than the former one
+	glDepthFunc(GL_LESS); 
 
   //LOOP
 	char file_name[10];
@@ -343,10 +320,12 @@ int main( void )
 		glm::mat4 viewMat = glm::transpose(glm::inverse(vMatrix));
 		glm::mat4 MVP        = Projection * vMatrix; // Remember, matrix multiplication is the other way around
 
-		
-		glBindFramebuffer(GL_FRAMEBUFFER,fbo);
-		glDrawBuffers(3, DrawBuffers); // "3" is the size of DrawBuffers
 
+		if(enable_output){
+			glBindFramebuffer(GL_FRAMEBUFFER,fbo);
+			glDrawBuffers(3, DrawBuffers); // "3" is the size of DrawBuffers
+		}	
+		
 		// Clear the screen
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -359,6 +338,11 @@ int main( void )
 		// in the "MVP" uniform
 		ourShader.setMat4("MVP",MVP);
 		ourShader.setMat4("viewMat",viewMat);
+		ourShader.setMat4("viewmodelMat",vMatrix);
+		ourShader.setVec3f("light.direction",light.direction);
+		ourShader.setVec3f("light.ambient",light.ambient);
+		ourShader.setVec3f("light.diffuse",light.diffuse);
+		ourShader.setVec3f("light.specular",light.specular);
 
 		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
@@ -406,18 +390,19 @@ int main( void )
 		// Draw the triangle !
 		glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles		
 
-		//screen shots
-		sprintf(file_name,"output/frame/%04d.png",z);
-		saveScreenshot(file_name,origin_color);
+		if(enable_output){
+			//screen shots
+			sprintf(file_name,screenshot_output_dir,z);
+			saveScreenshot(file_name);
 
-		//image uv
-		sprintf(file_name,"output/uv/%04d.npy",z);
-		saveImageUV(file_name);
+			//image uv
+			sprintf(file_name,uv_output_dir,z);
+			saveImageUV(file_name);
 
-		//view normal
-		sprintf(file_name,"output/view_normal/%04d.npy",z);
-		saveImageViewNormal(file_name);
-
+			//view normal
+			sprintf(file_name,view_normal_output_dir,z);
+			saveImageViewNormal(file_name);
+		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glDisableVertexAttribArray(0);
@@ -445,10 +430,10 @@ int main( void )
 	glDeleteTextures(1,&origin_color);
 	glDeleteTextures(1,&view_normal);
 	glDeleteVertexArrays(1, &VertexArrayID);
+	ourShader.~Shader();
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
-
 
 	return 0;
 }
