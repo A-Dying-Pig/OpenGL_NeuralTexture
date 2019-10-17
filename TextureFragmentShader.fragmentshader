@@ -38,8 +38,9 @@ void main(){
     vec3 diffuse  = light.diffuse  * diff;  
 
     vec3 viewDir = -normalize(fragpos);
+    vec3 halfwayDir = normalize(viewDir - view_light_direction);
     vec3 reflectDir = reflect(view_light_direction, out_view_normal);  
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    float spec = pow(max(dot(halfwayDir, reflectDir), 0.0), 32);
     vec3 specular = light.specular * spec;
 
     color = (ambient + diffuse + specular) * color;
