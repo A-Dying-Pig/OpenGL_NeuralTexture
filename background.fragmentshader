@@ -1,0 +1,68 @@
+#version 330 core
+struct Light {
+    vec3 direction;
+  
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+
+// Interpolated values from the vertex shaders
+in vec3 view_normal;
+in vec3 fragpos;
+in mat4 viewMat;
+in vec4 FragPosLightSpace;
+
+
+// Values that stay constant for the whole mesh.
+uniform Light light;
+uniform vec3 background_color;
+uniform sampler2D shadowMap;
+
+
+// Ouput data
+out vec3 color;
+
+
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5; 
+    float closestDepth = texture(shadowMap, projCoords.xy).r;   
+    float currentDepth = projCoords.z;  
+    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;  
+    return shadow;
+}
+
+
+void main(){
+	// Output color = color of the texture at the specified UV
+
+    float gamma = 2.2;
+	color = background_color;
+    color = pow(color, vec3(gamma));
+
+	vec3 out_view_normal = normalize(view_normal);
+    
+    //PHONE light calculated in world space
+    vec3 ambient  = light.ambient;
+
+    vec3 view_light_direction = normalize((viewMat * vec4(light.direction, 0.0)).xyz);
+    float diff = max(dot(out_view_normal,-view_light_direction),0);
+    vec3 diffuse  = light.diffuse  * diff;  
+
+    vec3 viewDir = -normalize(fragpos);
+    vec3 halfwayDir = normalize(viewDir - view_light_direction);
+    vec3 reflectDir = reflect(view_light_direction, out_view_normal);  
+    float spec = pow(max(dot(halfwayDir, out_view_normal), 0.0), 64);
+    vec3 specular = light.specular * spec;
+
+    //shadow
+    float shadow = ShadowCalculation(FragPosLightSpace);       
+    color = (ambient + (diffuse + specular) * (1.0 - shadow)) * color;
+    //color = (ambient + (diffuse + specular)) * color;
+
+
+    //Gamma
+    color = pow(color, vec3(1.0/gamma));
+}

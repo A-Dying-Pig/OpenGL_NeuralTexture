@@ -34,8 +34,9 @@ int window_width = 1024;
 int window_height = 768;
 int viewport_width = 1024;
 int viewport_height = 768;
-bool enable_output = false;
+bool enable_output = true;
 int total_frame = 2000;
+glm::vec3 background_color = vec3(0.3f,0.3f,0.3f); 
 
 char uv_output_dir[] = "output/uv/%04d.npy";
 char screenshot_output_dir[] = "output/frame/%04d.png";
@@ -49,6 +50,70 @@ struct Light {
     vec3 specular;
 };
 
+
+void initBackground(GLuint &bgVAO, GLuint &bgVBO){
+// put the vase in a cube
+				// coordinates - normal
+        float vertices[] = {
+            // back face
+            // -1.0f, -1.0f, -1.0f,  0.0f,0.0f,1.0f,// bottom-left
+            //  1.0f,  1.0f, -1.0f,  0.0f,0.0f,1.0f,// top-right
+            //  1.0f, -1.0f, -1.0f,  0.0f,0.0f,1.0f, // bottom-right         
+            //  1.0f,  1.0f, -1.0f,  0.0f,0.0f,1.0f,// top-right
+            // -1.0f, -1.0f, -1.0f,  0.0f,0.0f,1.0f,// bottom-left
+            // -1.0f,  1.0f, -1.0f,  0.0f,0.0f,1.0f,  // top-left
+            // front face
+            // -1.0f, -1.0f,  1.0f,  0.0f,0.0f,-1.0f, // bottom-left
+            //  1.0f, -1.0f,  1.0f,  0.0f,0.0f,-1.0f, // bottom-right
+            //  1.0f,  1.0f,  1.0f,  0.0f,0.0f,-1.0f, // top-right
+            //  1.0f,  1.0f,  1.0f,  0.0f,0.0f,-1.0f, // top-right
+            // -1.0f,  1.0f,  1.0f,  0.0f,0.0f,-1.0f, // top-left
+            // -1.0f, -1.0f,  1.0f,  0.0f,0.0f,-1.0f, // bottom-left
+            // left face
+            // -1.0f,  1.0f,  1.0f,  1.0f,0.0f,0.0f, // top-right
+            // -1.0f,  1.0f, -1.0f,  1.0f,0.0f,0.0f, // top-left
+            // -1.0f, -1.0f, -1.0f,  1.0f,0.0f,0.0f, // bottom-left
+            // -1.0f, -1.0f, -1.0f,  1.0f,0.0f,0.0f, // bottom-left
+            // -1.0f, -1.0f,  1.0f,  1.0f,0.0f,0.0f, // bottom-right
+            // -1.0f,  1.0f,  1.0f,  1.0f,0.0f,0.0f, // top-right
+            // right face
+            //  1.0f,  1.0f,  1.0f,  -1.0f,0.0f,0.0f, // top-left
+            //  1.0f, -1.0f, -1.0f,  -1.0f,0.0f,0.0f, // bottom-right
+            //  1.0f,  1.0f, -1.0f,  -1.0f,0.0f,0.0f, // top-right         
+            //  1.0f, -1.0f, -1.0f,  -1.0f,0.0f,0.0f, // bottom-right
+            //  1.0f,  1.0f,  1.0f,  -1.0f,0.0f,0.0f, // top-left
+            //  1.0f, -1.0f,  1.0f,  -1.0f,0.0f,0.0f, // bottom-left     
+            // bottom face
+            -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, // top-right
+             2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, // top-left
+             2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, // bottom-left
+             2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, // bottom-left
+            -2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, // bottom-right
+            -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, // top-right
+            // top face
+            // -1.0f,  1.0f, -1.0f,  0.0f,-1.0f,0.0f, // top-left
+            //  1.0f,  1.0f , 1.0f,  0.0f,-1.0f,0.0f, // bottom-right
+            //  1.0f,  1.0f, -1.0f,  0.0f,-1.0f,0.0f, // top-right     
+            //  1.0f,  1.0f,  1.0f,  0.0f,-1.0f,0.0f, // bottom-right
+            // -1.0f,  1.0f, -1.0f,  0.0f,-1.0f,0.0f, // top-left
+            // -1.0f,  1.0f,  1.0f,  0.0f,-1.0f,0.0f, // bottom-left        
+        };
+	glGenVertexArrays(1, &bgVAO);
+	glGenBuffers(1,&bgVBO);
+	glBindVertexArray(bgVAO);
+	//fill buffer
+	glBindBuffer(GL_ARRAY_BUFFER, bgVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	// link vertex attributes
+	//coordinates
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)0);
+	// normals
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(3 * sizeof(float)));
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
 
 void saveImageViewNormal(const char * filename){
 	GLfloat * image_view_normal_data = new GLfloat[viewport_height * viewport_width * 3];
@@ -195,7 +260,6 @@ int main( void )
 
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
 
 	// Create and compile our GLSL program from the shaders
 	Shader ourShader("TransformVertexShader.vertexshader","TextureFragmentShader.fragmentshader");
@@ -212,8 +276,6 @@ int main( void )
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
 	stbi_image_free(data);
-	// Get a handle for our "myTextureSampler" uniform
-	GLuint TextureID  = glGetUniformLocation(ourShader.ID, "myTextureSampler");
 
 	//LOAD MODEL
 	//load vertex,uv,normals from file
@@ -240,9 +302,21 @@ int main( void )
 	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
 	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
 
+	glBindVertexArray(VertexArrayID);
+	// 1st attribute
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0, (void*)0);
+	// 2nd attribute buffer : UVs
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+	glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,0, (void*)0);
+	// 3rd attribute buffer : normals
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+	glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,0, (void*)0);
+	glBindVertexArray(0);
 
-	//view port
-	glViewport(0,0,viewport_width,viewport_height);
 	
 	// FRAME OUTPUT
 	//frame buffer
@@ -282,113 +356,163 @@ int main( void )
 	GLenum DrawBuffers[3] = {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2};
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);   
 
+	// BACKGROUND
+	Shader backgroundShader("background.vertexshader","background.fragmentshader");
+	GLuint bgVAO,bgVBO;
+	initBackground(bgVAO,bgVBO);
+
+
 	//PHONE LIGHT
 	Light light;
-	light.direction = normalize(vec3(-1.0f,0,0));
-	light.ambient = vec3(0.5,0.5,0.5);
-	light.diffuse = vec3(0.5,0.5,0.5);
-	light.specular = vec3(0.5,0.5,0.5);
+	light.direction = normalize(vec3(-1.0f,-1.0f,0));
+	light.ambient = vec3(0.1,0.1,0.1);
+	light.diffuse = vec3(0.6,0.6,0.6);
+	light.specular = vec3(0.3,0.3,0.3);
 
-	// MATRIX
+	//SHADOW
+	unsigned int depthMapFBO;
+	glGenFramebuffers(1, &depthMapFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	//depth map
+	GLuint depthMap;
+	glGenTextures(1,&depthMap);
+	glBindTexture(GL_TEXTURE_2D,depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, viewport_width, viewport_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); 
+
+	
+	Shader simpleDepthShader("simpleDepthShader.vertexshader","simpleDepthShader.fragmentshader");
+
+	// MODEL MATRIX
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 2000.0f);
+	glm::mat4 Projection = glm::perspective(glm::radians(45.0f), (float)viewport_width / (float)viewport_height, 1.0f, 4000.0f);
 	// Camera matrix
 	glm::mat4 View       = glm::lookAt(
-								glm::vec3(1200,0,0), // Camera is at (4,3,3), in World Space
+								glm::vec3(1200,1200,0), // Camera is at (4,3,3), in World Space
 								glm::vec3(0,0,0), // and looks at the origin
 								glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
 						   );
 	// Model matrix : an identity matrix (model will be at the origin)
 	glm::vec3 myRotationAxis( 1, 0, 0);
-	glm::mat4 translateMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, -400.0f, 0.0f));
+	glm::mat4 translateMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, 0.0f));
 	glm::mat4 rotateMatrix = glm::rotate( -1.570796f, myRotationAxis );
-	//glm::mat4 Model = glm::mat4(1.0f);
-	// Our ModelViewProjection : multiplication of our 3 matrices
 	glm::vec3 yAxis(0,1,0);
-	//glm::mat4 Model      = 	translateMatrix * rotateMatrix;
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
-		// Accept fragment if it closer to the camera than the former one
+	// Accept fragment if it closer to the camera than the former one
 	glDepthFunc(GL_LESS); 
+
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
   //LOOP
 	char file_name[10];
+	//while(1){
 	for(int z = 0; z < total_frame; z++){
+		//int z = 0;
+		//model matrix
 		glm::mat4 yrotateMatrix = glm::rotate(6.283184f/total_frame * z,yAxis);
-		glm::mat4 vMatrix = View * translateMatrix * yrotateMatrix * rotateMatrix;
-		glm::mat4 viewMat = glm::transpose(glm::inverse(vMatrix));
-		glm::mat4 MVP        = Projection * vMatrix; // Remember, matrix multiplication is the other way around
+
+		//LIGHT MATRIX
+		float light_distance = 1200;
+		glm::mat4 lightProjection = glm::ortho(-2000.0f, 2000.0f,-2000.0f, 2000.0f, 1.0f, 4000.0f); 
+	  //glm::mat4 lightProjection =	glm::perspective(glm::radians(45.0f), (float)viewport_width / (float)viewport_height, 1.0f, 4000.0f); 
+		glm::vec3 lightPosition = glm::vec3(1200,1200,0);
+		//lightPosition = vec3(yrotateMatrix * vec4(lightPosition,1.0));
+		glm::mat4 lightView = glm::lookAt(lightPosition, 
+                                  		glm::vec3( 0.0f, 0.0f,  0.0f), 
+                                  		glm::vec3( 0.0f, 1.0f,  0.0f));  
+
+	  glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
+
+		//view port
+		glViewport(0,0,viewport_width,viewport_height);
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		//PASS 1 - calculate depth map
+		//in light's perspective 
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glClear(  GL_DEPTH_BUFFER_BIT);
 
 
+		simpleDepthShader.use();
+		simpleDepthShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
+
+		// background
+		glm::mat4 BackdgroundModel = yrotateMatrix;
+		//glm::mat4 BackdgroundModel =  glm::mat4(1.0f);
+		simpleDepthShader.setMat4("model",BackdgroundModel);
+		glBindVertexArray(bgVAO);
+		//glDrawArrays(GL_TRIANGLES, 0, 6); // 12*3 indices starting at 0 -> 12 triangles	
+		glBindVertexArray(0);
+
+		// vase
+		glm::mat4 Model = translateMatrix * yrotateMatrix * rotateMatrix;
+		//glm::mat4 Model = translateMatrix * rotateMatrix;
+		simpleDepthShader.setMat4("model",Model);
+		glBindVertexArray(VertexArrayID);
+		glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles	
+		glBindVertexArray(0);
+		
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+		//PASS 2 - render image
+		// in real camera's perspective
+		//view port
 		if(enable_output){
 			glBindFramebuffer(GL_FRAMEBUFFER,fbo);
 			glDrawBuffers(3, DrawBuffers); // "3" is the size of DrawBuffers
 		}	
-		
-		// Clear the screen
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glViewport(0,0,viewport_width,viewport_height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		//glClear(GL_COLOR_BUFFER_BIT);
 
-		// Use our shader
+		//DRAW BACKGROUND
+		backgroundShader.use();
+		backgroundShader.setMat4("view",View);
+		backgroundShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
+		backgroundShader.setMat4("projection",Projection);
+		backgroundShader.setMat4("model",BackdgroundModel);
+		backgroundShader.setVec3f("light.direction",light.direction);
+		backgroundShader.setVec3f("light.ambient",light.ambient);
+		backgroundShader.setVec3f("light.diffuse",light.diffuse);
+		backgroundShader.setVec3f("light.specular",light.specular);
+		backgroundShader.setVec3f("background_color",background_color);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		glUniform1i(glGetUniformLocation(backgroundShader.ID, "shadowMap"), 0);
+		glBindVertexArray(bgVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 12*3 indices starting at 0 -> 12 triangles	
+		glBindVertexArray(0);
+
+		
+		// DRAW VASE
 		ourShader.use();
-
-		// Send our transformation to the currently bound shader, 
-		// in the "MVP" uniform
-		ourShader.setMat4("MVP",MVP);
-		ourShader.setMat4("viewMat",viewMat);
-		ourShader.setMat4("viewmodelMat",vMatrix);
+		ourShader.setMat4("model",Model);
+		ourShader.setMat4("view",View);
+		ourShader.setMat4("projection",Projection);
+		ourShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
 		ourShader.setVec3f("light.direction",light.direction);
 		ourShader.setVec3f("light.ambient",light.ambient);
 		ourShader.setVec3f("light.diffuse",light.diffuse);
 		ourShader.setVec3f("light.specular",light.specular);
-
 		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
-		// Set our "myTextureSampler" sampler to use Texture Unit 0
-		glUniform1i(TextureID, 0);
-
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(
-			0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
-
-		// 2nd attribute buffer : UVs
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-		glVertexAttribPointer(
-			1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			2,                                // size : U+V => 2
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
-		);
-
-		// 3rd attribute buffer : normals
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-		glVertexAttribPointer(
-			2,                                // attribute
-			3,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
-		);
-
-		
-		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles		
+		glUniform1i(glGetUniformLocation(ourShader.ID, "myTextureSampler"), 0);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		glUniform1i(glGetUniformLocation(ourShader.ID, "shadowMap"), 1);
+		glBindVertexArray(VertexArrayID);
+		glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles	
+		glBindVertexArray(0);
+	
 
 		if(enable_output){
 			//screen shots
@@ -405,9 +529,6 @@ int main( void )
 		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -429,7 +550,13 @@ int main( void )
 	glDeleteTextures(1,&image_uv);
 	glDeleteTextures(1,&origin_color);
 	glDeleteTextures(1,&view_normal);
+	glDeleteFramebuffers(1,&depthMapFBO);
+	glDeleteTextures(1,&depthMap);
+
+	glDeleteBuffers(1, &bgVBO);
 	glDeleteVertexArrays(1, &VertexArrayID);
+	glDeleteVertexArrays(1,&bgVAO);
+
 	ourShader.~Shader();
 
 	// Close OpenGL window and terminate GLFW

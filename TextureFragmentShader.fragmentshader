@@ -11,12 +11,14 @@ struct Light {
 in vec2 UV;
 in vec3 view_normal;
 in vec3 fragpos;
-
+in mat4 viewMat;
+in vec4 FragPosLightSpace;
 
 // Values that stay constant for the whole mesh.
 uniform sampler2D myTextureSampler;
 uniform Light light;
-uniform mat4 viewMat;
+uniform sampler2D shadowMap;
+
 
 // Ouput data
 layout(location = 0) out vec3 color;
@@ -24,9 +26,23 @@ layout(location = 1) out vec3 out_uv;
 layout(location = 2) out vec3 out_view_normal;
 
 
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5; 
+    float closestDepth = texture(shadowMap, projCoords.xy).r;   
+    float currentDepth = projCoords.z;  
+    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;  
+    return shadow;
+}
+
 void main(){
 	// Output color = color of the texture at the specified UV
+
+    float gamma = 2.2;
 	color = texture( myTextureSampler, UV ).rgb;
+    color = pow(color, vec3(gamma));
+    
 	out_uv = vec3(UV,0);
 	out_view_normal = normalize(view_normal);
 
@@ -43,6 +59,9 @@ void main(){
     float spec = pow(max(dot(halfwayDir, out_view_normal), 0.0), 64);
     vec3 specular = light.specular * spec;
 
-    color = (ambient + diffuse + specular) * color;
+    float shadow = ShadowCalculation(FragPosLightSpace);       
+    color = (ambient + (diffuse + specular) * (1.0 - shadow)) * color;
 
+    //Gamma
+    color = pow(color, vec3(1.0/gamma));
 }
