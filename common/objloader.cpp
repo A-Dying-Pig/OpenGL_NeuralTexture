@@ -64,12 +64,33 @@ bool loadOBJ(
 		}else if ( strcmp( lineHeader, "f" ) == 0 ){
 			std::string vertex1, vertex2, vertex3;
 			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-			int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2] );
-			if (matches != 9){
-				printf("File can't be read by our simple parser :-( Try exporting with other options\n");
+			unsigned int vertexIndex2[3], uvIndex2[3], normalIndex2[3];
+			int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2],&vertexIndex2[2], &uvIndex2[2], &normalIndex2[2]);
+			if (matches == 12){
+				vertexIndex2[0] = vertexIndex[0];
+				vertexIndex2[1] = vertexIndex[2];
+				uvIndex2[0] = uvIndex[0];
+				uvIndex2[1] = uvIndex[2];
+				normalIndex2[0] = normalIndex[0];
+				normalIndex2[1] = normalIndex[2];
+
+				vertexIndices.push_back(vertexIndex2[0]);
+				vertexIndices.push_back(vertexIndex2[1]);
+				vertexIndices.push_back(vertexIndex2[2]);
+				uvIndices    .push_back(uvIndex2[0]);
+				uvIndices    .push_back(uvIndex2[1]);
+				uvIndices    .push_back(uvIndex2[2]);
+				normalIndices.push_back(normalIndex2[0]);
+				normalIndices.push_back(normalIndex2[1]);
+				normalIndices.push_back(normalIndex2[2]);
+			}else if (matches == 9){
+
+			}else{
+				printf("fail: %d",matches);
 				fclose(file);
 				return false;
 			}
+			
 			vertexIndices.push_back(vertexIndex[0]);
 			vertexIndices.push_back(vertexIndex[1]);
 			vertexIndices.push_back(vertexIndex[2]);
@@ -79,6 +100,7 @@ bool loadOBJ(
 			normalIndices.push_back(normalIndex[0]);
 			normalIndices.push_back(normalIndex[1]);
 			normalIndices.push_back(normalIndex[2]);
+
 		}else if (strcmp(lineHeader,"usemtl") == 0){
 			fscanf(file, "%s", lineHeader);
 			if(strcmp(lineHeader,"material_1") == 0)

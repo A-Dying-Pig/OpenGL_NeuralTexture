@@ -1,0 +1,38 @@
+#version 330 core
+
+// Input vertex data, different for all executions of this shader.
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec2 vertexUV;
+layout(location = 2) in vec3 vertexNormal;
+
+// Output data ; will be interpolated for each fragment.
+out vec2 TexCoords;
+// in world space
+out vec3 WorldPos;
+out vec3 Normal;
+//in camera space
+out mat4 viewMat;
+out vec3 viewNormal;
+
+// Values that stay constant for the whole mesh.
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+
+//uniform mat4 lightSpaceMatrix;
+
+void main(){	
+
+	mat4 VM = view * model;
+	gl_Position =  projection * VM * vec4(aPos,1);
+
+	TexCoords = vertexUV;
+  WorldPos = (model * vec4(aPos, 1)).xyz;
+  Normal = (transpose(inverse(model)) * vec4(vertexNormal,0.0)).xyz;
+
+	viewMat = transpose(inverse(VM));
+	viewNormal = (viewMat * vec4(vertexNormal, 0.0)).xyz;
+
+	//FragPosLightSpace = lightSpaceMatrix * vec4(aPos, 1.0);
+}
+

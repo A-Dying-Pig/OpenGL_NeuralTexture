@@ -5,11 +5,12 @@ import os
 import cv2
 
 
-output_directory = "../output/uv"
+output_directory = "./"
 filename = "0000.npy"
 
 result_dir = "result"
 ret = np.load(os.path.join(output_directory, filename))
+print(ret.shape)
 height = ret.shape[0]
 width = ret.shape[1]
 

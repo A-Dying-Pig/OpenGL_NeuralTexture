@@ -32,7 +32,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     projCoords = projCoords * 0.5 + 0.5; 
     float closestDepth = texture(shadowMap, projCoords.xy).r;   
     float currentDepth = projCoords.z;  
-    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;  
+    float shadow = currentDepth - 0.075 > closestDepth  ? 1.0 : 0.0;  
     return shadow;
 }
 
@@ -56,12 +56,12 @@ void main(){
     vec3 viewDir = -normalize(fragpos);
     vec3 halfwayDir = normalize(viewDir - view_light_direction);
     vec3 reflectDir = reflect(view_light_direction, out_view_normal);  
-    float spec = pow(max(dot(halfwayDir, out_view_normal), 0.0), 64);
+    float spec = pow(max(dot(halfwayDir, out_view_normal), 0.0), 32);
     vec3 specular = light.specular * spec;
 
     float shadow = ShadowCalculation(FragPosLightSpace);       
-    color = (ambient + (diffuse + specular) * (1.0 - shadow)) * color;
-
+    color = (ambient + (specular + diffuse) * (1.0 - shadow)) * color;
+    //color = (ambient + diffuse + specular) * color;
     //Gamma
     color = pow(color, vec3(1.0/gamma));
 }
