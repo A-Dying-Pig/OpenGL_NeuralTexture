@@ -30,17 +30,17 @@ using namespace glm;
 #include <cnpy.h>
 
 
-int window_width = 1024;
-int window_height = 768;
-int viewport_width = 1024;
-int viewport_height = 768;
+int window_width = 512;
+int window_height = 384;
+int viewport_width = 512;
+int viewport_height = 384;
 bool enable_output = true;
 int total_frame = 2000;
 glm::vec3 background_color = vec3(0.3f,0.3f,0.3f); 
 
-char uv_output_dir[] = "output/uv/%04d.npy";
-char screenshot_output_dir[] = "output/frame/%04d.png";
-char view_normal_output_dir[] = "output/view_normal/%04d.npy";
+char uv_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384Basketball60/uv/%04d.npy";
+char screenshot_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384Basketball60/frame/%04d.png";
+char view_normal_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384Basketball60/view_normal/%04d.npy";
 
 //Phone light
 struct Light {
@@ -84,12 +84,12 @@ void initBackground(GLuint &bgVAO, GLuint &bgVBO){
             //  1.0f,  1.0f,  1.0f,  -1.0f,0.0f,0.0f, // top-left
             //  1.0f, -1.0f,  1.0f,  -1.0f,0.0f,0.0f, // bottom-left     
             // bottom face
-            -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, // top-right
-             2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, // top-left
-             2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, // bottom-left
-             2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, // bottom-left
-            -2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, // bottom-right
-            -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, // top-right
+            -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.0f, 0.0f, // top-right
+             2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.08f, 0.0f,// top-left
+             2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.04f, 0.08f,// bottom-left
+             2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.04f, 0.08f,// bottom-left
+            -2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.08f, 0.0f,// bottom-right
+            -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.0f,0.0f// top-right
             // top face
             // -1.0f,  1.0f, -1.0f,  0.0f,-1.0f,0.0f, // top-left
             //  1.0f,  1.0f , 1.0f,  0.0f,-1.0f,0.0f, // bottom-right
@@ -107,10 +107,15 @@ void initBackground(GLuint &bgVAO, GLuint &bgVBO){
 	// link vertex attributes
 	//coordinates
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)0);
-	// normals
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)0);
+	// uv
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(3 * sizeof(float)));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(6 * sizeof(float)));
+	// normals
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, (void*)(3 * sizeof(float)));
+
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
@@ -133,6 +138,7 @@ void saveImageViewNormal(const char * filename){
   	}
 	}
 
+	//std::ofstream fout("normal.txt");
 	std::vector<float> data;
 	//write into files
 	for (int j = 0; j < viewport_height; j++){
@@ -141,8 +147,11 @@ void saveImageViewNormal(const char * filename){
 			data.push_back(image_view_normal_data[t]);
 			data.push_back(image_view_normal_data[t+1]);
 			data.push_back(image_view_normal_data[t+2]);
+			//fout << image_view_normal_data[t] << "/"<<image_view_normal_data[t+1] <<"/"<<image_view_normal_data[t+2]<<" ";
 		}
+		//fout<<std::endl;
 	}
+	//fout.close();
 	cnpy::npy_save(filename,&data[0],{(unsigned long)viewport_height,(unsigned long)viewport_width,3},"w");
 	delete[] image_view_normal_data;
 }
@@ -165,7 +174,8 @@ void saveImageUV(const char * filename){
       	++y;
   	}
 	}
-
+	
+	//std::ofstream fout("uv.txt");
 	std::vector<float> data;
 	//write into files
 	for (int j = 0; j < viewport_height; j++){
@@ -173,8 +183,11 @@ void saveImageUV(const char * filename){
 			int t = j * viewport_width * 3 + i * 3;
 			data.push_back(image_uv_data[t]);
 			data.push_back(image_uv_data[t+1]);
+			//fout << image_uv_data[t] << "/"<<image_uv_data[t+1] <<" ";
 		}
+		//fout<<std::endl;
 	}
+	//fout.close();
 	cnpy::npy_save(filename,&data[0],{(unsigned long)viewport_height,(unsigned long)viewport_width,2},"w");
 	delete[] image_uv_data;
 }
@@ -267,7 +280,7 @@ int main( void )
 	// TEXTURE
 	// Load the texture
 	int width, height, nrChannels;
-	unsigned char *data = stbi_load("Vase/Vase-obj_0.jpg", &width, &height, &nrChannels, 0); 
+	unsigned char *data = stbi_load("basketball/NBA BASKETBALL DIFFUSE.jpg", &width, &height, &nrChannels, 0); 
 	printf("texture width: %d, height: %d, channels: %d\n",width,height,nrChannels);
 	unsigned int texture;
 	glGenTextures(1, &texture);  
@@ -282,7 +295,7 @@ int main( void )
 	std::vector< glm::vec3 > vertices;
 	std::vector< glm::vec2 > uvs;
 	std::vector< glm::vec3 > normals; // Won't be used at the moment.
-	bool res = loadOBJ("Vase/Vase-obj2.obj", vertices, uvs, normals);
+	bool res = loadOBJ("basketball/basketball.obj", vertices, uvs, normals);
 	int vertices_size = vertices.size();
 	printf("vertices: %lu , uvs: %lu , normals: %lu \n",vertices.size(),uvs.size(),normals.size());
 
@@ -394,14 +407,15 @@ int main( void )
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	glm::mat4 Projection = glm::perspective(glm::radians(45.0f), (float)viewport_width / (float)viewport_height, 1.0f, 4000.0f);
 	// Camera matrix
-	glm::mat4 View       = glm::lookAt(
-								glm::vec3(1200,1200,0), // Camera is at (4,3,3), in World Space
-								glm::vec3(0,0,0), // and looks at the origin
-								glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
-						   );
+	// glm::mat4 View       = glm::lookAt(
+	// 							glm::vec3(1200,1200,0), // Camera is at (4,3,3), in World Space
+	// 							glm::vec3(0,0,0), // and looks at the origin
+	// 							glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
+	// 					   );
+
 	// Model matrix : an identity matrix (model will be at the origin)
 	glm::vec3 myRotationAxis( 1, 0, 0);
-	glm::mat4 translateMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, 0.0f));
+	glm::mat4 translateMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, 230.0f, 0.0f));
 	glm::mat4 rotateMatrix = glm::rotate( -1.570796f, myRotationAxis );
 	glm::vec3 yAxis(0,1,0);
 
@@ -419,6 +433,15 @@ int main( void )
 		//int z = 0;
 		//model matrix
 		glm::mat4 yrotateMatrix = glm::rotate(6.283184f/total_frame * z,yAxis);
+		float dis = 1500 - z * 0.25;
+		glm::vec4 camerapos = yrotateMatrix * glm::vec4(dis*0.5f,dis*0.866,0,1);
+		//std::cout<<glm::to_string(camerapos)<<std::endl;
+
+		glm::mat4 View       = glm::lookAt(
+								glm::vec3(camerapos), // Camera is at (4,3,3), in World Space
+								glm::vec3(0,0,0), // and looks at the origin
+								glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
+						   );
 
 		//LIGHT MATRIX
 		float light_distance = 1200;
@@ -446,19 +469,20 @@ int main( void )
 		simpleDepthShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
 
 		// background
-		glm::mat4 BackdgroundModel = yrotateMatrix;
-		//glm::mat4 BackdgroundModel =  glm::mat4(1.0f);
+		//glm::mat4 BackdgroundModel = yrotateMatrix;
+		glm::mat4 BackdgroundModel =  glm::mat4(1.0f);
 		simpleDepthShader.setMat4("model",BackdgroundModel);
 		glBindVertexArray(bgVAO);
 		//glDrawArrays(GL_TRIANGLES, 0, 6); // 12*3 indices starting at 0 -> 12 triangles	
 		glBindVertexArray(0);
 
-		// vase
-		glm::mat4 Model = translateMatrix * yrotateMatrix * rotateMatrix;
+		glm::mat4 myScalingMatrix = glm::scale( mat4(1.0f),vec3(10.0f, 10.0f ,10.0f));		// vase
+		glm::mat4 Model = translateMatrix * rotateMatrix * myScalingMatrix;
 		//glm::mat4 Model = translateMatrix * rotateMatrix;
 		simpleDepthShader.setMat4("model",Model);
 		glBindVertexArray(VertexArrayID);
-		glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles	
+		glDrawArrays(GL_TRIANGLES, 0, 11700); 
+		//glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles	
 		glBindVertexArray(0);
 		
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -474,27 +498,7 @@ int main( void )
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//DRAW BACKGROUND
-		backgroundShader.use();
-		backgroundShader.setMat4("view",View);
-		backgroundShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
-		backgroundShader.setMat4("projection",Projection);
-		backgroundShader.setMat4("model",BackdgroundModel);
-		backgroundShader.setVec3f("light.direction",light.direction);
-		backgroundShader.setVec3f("light.ambient",light.ambient);
-		backgroundShader.setVec3f("light.diffuse",light.diffuse);
-		backgroundShader.setVec3f("light.specular",light.specular);
-		backgroundShader.setVec3f("background_color",background_color);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, depthMap);
-		glUniform1i(glGetUniformLocation(backgroundShader.ID, "shadowMap"), 0);
-		glBindVertexArray(bgVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6); // 12*3 indices starting at 0 -> 12 triangles	
-		glBindVertexArray(0);
-
-		
-		// DRAW VASE
 		ourShader.use();
-		ourShader.setMat4("model",Model);
 		ourShader.setMat4("view",View);
 		ourShader.setMat4("projection",Projection);
 		ourShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
@@ -502,15 +506,52 @@ int main( void )
 		ourShader.setVec3f("light.ambient",light.ambient);
 		ourShader.setVec3f("light.diffuse",light.diffuse);
 		ourShader.setVec3f("light.specular",light.specular);
-		// Bind our texture in Texture Unit 0
+		ourShader.setMat4("model",BackdgroundModel);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUniform1i(glGetUniformLocation(ourShader.ID, "myTextureSampler"), 0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 		glUniform1i(glGetUniformLocation(ourShader.ID, "shadowMap"), 1);
+
+		// backgroundShader.use();
+		// backgroundShader.setMat4("view",View);
+		// backgroundShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
+		// backgroundShader.setMat4("projection",Projection);
+		// backgroundShader.setMat4("model",BackdgroundModel);
+		// backgroundShader.setVec3f("light.direction",light.direction);
+		// backgroundShader.setVec3f("light.ambient",light.ambient);
+		// backgroundShader.setVec3f("light.diffuse",light.diffuse);
+		// backgroundShader.setVec3f("light.specular",light.specular);
+		// backgroundShader.setVec3f("background_color",background_color);
+		// glActiveTexture(GL_TEXTURE0);
+		// glBindTexture(GL_TEXTURE_2D, depthMap);
+		// glUniform1i(glGetUniformLocation(backgroundShader.ID, "shadowMap"), 0);
+		glBindVertexArray(bgVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 12*3 indices starting at 0 -> 12 triangles	
+		glBindVertexArray(0);
+
+		
+		// DRAW VASE
+		// ourShader.use();
+		// ourShader.setMat4("view",View);
+		// ourShader.setMat4("projection",Projection);
+		// ourShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
+		// ourShader.setVec3f("light.direction",light.direction);
+		// ourShader.setVec3f("light.ambient",light.ambient);
+		// ourShader.setVec3f("light.diffuse",light.diffuse);
+		// ourShader.setVec3f("light.specular",light.specular);
+		ourShader.setMat4("model",Model);
+		// Bind our texture in Texture Unit 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glUniform1i(glGetUniformLocation(ourShader.ID, "myTextureSampler"), 0);
+		// glActiveTexture(GL_TEXTURE1);
+		// glBindTexture(GL_TEXTURE_2D, depthMap);
+		// glUniform1i(glGetUniformLocation(ourShader.ID, "shadowMap"), 1);
 		glBindVertexArray(VertexArrayID);
-		glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles	
+		glDrawArrays(GL_TRIANGLES, 0, 11700); 
+		// glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles	
 		glBindVertexArray(0);
 	
 

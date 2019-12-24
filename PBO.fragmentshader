@@ -1,0 +1,27 @@
+#version 330 core
+in vec2 TexCoords;
+in vec3 WorldPos;
+in vec3 Normal;
+in mat4 viewMat;
+in vec3 viewNormal;
+
+  
+uniform vec3 camPos;
+  
+uniform vec3  albedo;
+uniform float metallic;
+uniform float roughness;
+uniform float ao;
+
+layout(location = 0) out vec3 FragColor;
+layout(location = 1) out vec3 out_uv;
+layout(location = 2) out vec3 out_view_normal;
+
+void main(){
+  vec3 N = normalize(Normal); 
+  vec3 V = normalize(camPos - WorldPos);
+
+
+
+}
+
