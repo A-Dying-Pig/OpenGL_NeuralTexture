@@ -55,4 +55,12 @@ The repository includes two models - basketball and vase as shown in the folder.
 If you want to load your own model, the library included in the repository supports .obj format.
 
 
+## Example
+Basketball
+<img src="https://github.com/A-Dying-Pig/OpenGL_NeuralTexture/tree/master/example/basketball.gif" alt="basketball" />
+
+Vase
+<img src="https://github.com/A-Dying-Pig/OpenGL_NeuralTexture/tree/master/example/vase.gif" alt="vase" />
+
+
 
