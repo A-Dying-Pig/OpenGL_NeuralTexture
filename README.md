@@ -57,10 +57,10 @@ If you want to load your own model, the library included in the repository suppo
 
 ## Rendered scene example
 Basketball
-![basketball](https://github.com/A-Dying-Pig/OpenGL_NeuralTexture/tree/master/example/basketball.gif )   
+![basketball](https://github.com/A-Dying-Pig/OpenGL_NeuralTexture/blob/master/example/basketball.gif )   
 
 Vase
-![vase](https://github.com/A-Dying-Pig/OpenGL_NeuralTexture/tree/master/example/vase.gif )   
+![vase](https://github.com/A-Dying-Pig/OpenGL_NeuralTexture/blob/master/example/vase.gif )   
 
 
 
