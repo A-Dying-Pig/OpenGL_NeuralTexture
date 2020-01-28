@@ -34,9 +34,10 @@ int window_width = 512;
 int window_height = 384;
 int viewport_width = 512;
 int viewport_height = 384;
-bool enable_output = true;
+bool enable_output = false;
 int total_frame = 2000;
 glm::vec3 background_color = vec3(0.3f,0.3f,0.3f); 
+int object_id = 0; // 0 for basketball; 1 for vase
 
 char uv_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384Basketball60/uv/%04d.npy";
 char screenshot_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384Basketball60/frame/%04d.png";
@@ -52,58 +53,37 @@ struct Light {
 
 
 void initBackground(GLuint &bgVAO, GLuint &bgVBO){
-// put the vase in a cube
-				// coordinates - normal
-        float vertices[] = {
-            // back face
-            // -1.0f, -1.0f, -1.0f,  0.0f,0.0f,1.0f,// bottom-left
-            //  1.0f,  1.0f, -1.0f,  0.0f,0.0f,1.0f,// top-right
-            //  1.0f, -1.0f, -1.0f,  0.0f,0.0f,1.0f, // bottom-right         
-            //  1.0f,  1.0f, -1.0f,  0.0f,0.0f,1.0f,// top-right
-            // -1.0f, -1.0f, -1.0f,  0.0f,0.0f,1.0f,// bottom-left
-            // -1.0f,  1.0f, -1.0f,  0.0f,0.0f,1.0f,  // top-left
-            // front face
-            // -1.0f, -1.0f,  1.0f,  0.0f,0.0f,-1.0f, // bottom-left
-            //  1.0f, -1.0f,  1.0f,  0.0f,0.0f,-1.0f, // bottom-right
-            //  1.0f,  1.0f,  1.0f,  0.0f,0.0f,-1.0f, // top-right
-            //  1.0f,  1.0f,  1.0f,  0.0f,0.0f,-1.0f, // top-right
-            // -1.0f,  1.0f,  1.0f,  0.0f,0.0f,-1.0f, // top-left
-            // -1.0f, -1.0f,  1.0f,  0.0f,0.0f,-1.0f, // bottom-left
-            // left face
-            // -1.0f,  1.0f,  1.0f,  1.0f,0.0f,0.0f, // top-right
-            // -1.0f,  1.0f, -1.0f,  1.0f,0.0f,0.0f, // top-left
-            // -1.0f, -1.0f, -1.0f,  1.0f,0.0f,0.0f, // bottom-left
-            // -1.0f, -1.0f, -1.0f,  1.0f,0.0f,0.0f, // bottom-left
-            // -1.0f, -1.0f,  1.0f,  1.0f,0.0f,0.0f, // bottom-right
-            // -1.0f,  1.0f,  1.0f,  1.0f,0.0f,0.0f, // top-right
-            // right face
-            //  1.0f,  1.0f,  1.0f,  -1.0f,0.0f,0.0f, // top-left
-            //  1.0f, -1.0f, -1.0f,  -1.0f,0.0f,0.0f, // bottom-right
-            //  1.0f,  1.0f, -1.0f,  -1.0f,0.0f,0.0f, // top-right         
-            //  1.0f, -1.0f, -1.0f,  -1.0f,0.0f,0.0f, // bottom-right
-            //  1.0f,  1.0f,  1.0f,  -1.0f,0.0f,0.0f, // top-left
-            //  1.0f, -1.0f,  1.0f,  -1.0f,0.0f,0.0f, // bottom-left     
-            // bottom face
-            -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.0f, 0.0f, // top-right
-             2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.08f, 0.0f,// top-left
-             2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.04f, 0.08f,// bottom-left
-             2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.04f, 0.08f,// bottom-left
-            -2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.08f, 0.0f,// bottom-right
-            -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.0f,0.0f// top-right
-            // top face
-            // -1.0f,  1.0f, -1.0f,  0.0f,-1.0f,0.0f, // top-left
-            //  1.0f,  1.0f , 1.0f,  0.0f,-1.0f,0.0f, // bottom-right
-            //  1.0f,  1.0f, -1.0f,  0.0f,-1.0f,0.0f, // top-right     
-            //  1.0f,  1.0f,  1.0f,  0.0f,-1.0f,0.0f, // bottom-right
-            // -1.0f,  1.0f, -1.0f,  0.0f,-1.0f,0.0f, // top-left
-            // -1.0f,  1.0f,  1.0f,  0.0f,-1.0f,0.0f, // bottom-left        
-        };
+	// put the vase on the ground
+	// coordinates - normal - uv
+	float vertices_basketball[] = {
+    // bottom face
+    -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.0f, 0.0f, // top-right
+    2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.08f, 0.0f,// top-left
+    2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.04f, 0.08f,// bottom-left
+    2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.04f, 0.08f,// bottom-left
+  	-2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.08f, 0.0f,// bottom-right
+    -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.0f,0.0f// top-right    
+    };
+	float vertices_vase[] = {
+    // bottom face
+    -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 1.0f, 0.0f, // top-right
+    2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 0.8f, 0.0f,// top-left
+    2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.8f, 0.15f,// bottom-left
+    2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 0.8f, 0.15f,// bottom-left
+  	-2500.0f, 0.0f,  2500.0f,  0.0f,2500.0f,0.0f, 1.0f, 0.15f,// bottom-right
+    -2500.0f, 0.0f, -2500.0f,  0.0f,2500.0f,0.0f, 1.0f,0.0f// top-right    
+    };
+
 	glGenVertexArrays(1, &bgVAO);
 	glGenBuffers(1,&bgVBO);
 	glBindVertexArray(bgVAO);
 	//fill buffer
 	glBindBuffer(GL_ARRAY_BUFFER, bgVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	if (object_id == 0){
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_basketball), vertices_basketball, GL_STATIC_DRAW);
+	}else if (object_id == 1){
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_vase), vertices_vase, GL_STATIC_DRAW);
+	}
 	// link vertex attributes
 	//coordinates
   glEnableVertexAttribArray(0);
@@ -280,7 +260,12 @@ int main( void )
 	// TEXTURE
 	// Load the texture
 	int width, height, nrChannels;
-	unsigned char *data = stbi_load("basketball/NBA BASKETBALL DIFFUSE.jpg", &width, &height, &nrChannels, 0); 
+	unsigned char * data;
+	if (object_id == 0){
+		data = stbi_load("basketball/NBA BASKETBALL DIFFUSE.jpg", &width, &height, &nrChannels, 0); 
+	}else if (object_id == 1){
+		data = stbi_load("Vase/Vase-obj_0.jpg", &width, &height, &nrChannels, 0); 
+	}
 	printf("texture width: %d, height: %d, channels: %d\n",width,height,nrChannels);
 	unsigned int texture;
 	glGenTextures(1, &texture);  
@@ -295,8 +280,12 @@ int main( void )
 	std::vector< glm::vec3 > vertices;
 	std::vector< glm::vec2 > uvs;
 	std::vector< glm::vec3 > normals; // Won't be used at the moment.
-	bool res = loadOBJ("basketball/basketball.obj", vertices, uvs, normals);
-	int vertices_size = vertices.size();
+	if (object_id == 0){
+		loadOBJ("basketball/basketball.obj", vertices, uvs, normals);
+	}else if (object_id == 1){
+		loadOBJ("Vase/Vase-obj2.obj", vertices, uvs, normals);
+	}
+	long vertices_size = vertices.size();
 	printf("vertices: %lu , uvs: %lu , normals: %lu \n",vertices.size(),uvs.size(),normals.size());
 
 	//vertex/uv/normal BUFFER
@@ -415,7 +404,12 @@ int main( void )
 
 	// Model matrix : an identity matrix (model will be at the origin)
 	glm::vec3 myRotationAxis( 1, 0, 0);
-	glm::mat4 translateMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, 230.0f, 0.0f));
+	glm::mat4 translateMatrix;
+	if (object_id == 0){
+		translateMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, 230.0f, 0.0f));
+	}else if (object_id == 1){
+		translateMatrix = glm::mat4(1.0f);
+	}
 	glm::mat4 rotateMatrix = glm::rotate( -1.570796f, myRotationAxis );
 	glm::vec3 yAxis(0,1,0);
 
@@ -476,13 +470,18 @@ int main( void )
 		//glDrawArrays(GL_TRIANGLES, 0, 6); // 12*3 indices starting at 0 -> 12 triangles	
 		glBindVertexArray(0);
 
-		glm::mat4 myScalingMatrix = glm::scale( mat4(1.0f),vec3(10.0f, 10.0f ,10.0f));		// vase
+		glm::mat4 myScalingMatrix;
+		if (object_id == 0){
+			myScalingMatrix = glm::scale( mat4(1.0f),vec3(10.0f, 10.0f ,10.0f));		// basketball
+		}else if (object_id == 1){
+			myScalingMatrix = glm::scale( mat4(1.0f),vec3(0.9f, 0.9f ,0.9f));		// vase
+		}
+
 		glm::mat4 Model = translateMatrix * rotateMatrix * myScalingMatrix;
 		//glm::mat4 Model = translateMatrix * rotateMatrix;
 		simpleDepthShader.setMat4("model",Model);
 		glBindVertexArray(VertexArrayID);
-		glDrawArrays(GL_TRIANGLES, 0, 11700); 
-		//glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles	
+		glDrawArrays(GL_TRIANGLES, 0, vertices_size); 
 		glBindVertexArray(0);
 		
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -514,44 +513,20 @@ int main( void )
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 		glUniform1i(glGetUniformLocation(ourShader.ID, "shadowMap"), 1);
 
-		// backgroundShader.use();
-		// backgroundShader.setMat4("view",View);
-		// backgroundShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
-		// backgroundShader.setMat4("projection",Projection);
-		// backgroundShader.setMat4("model",BackdgroundModel);
-		// backgroundShader.setVec3f("light.direction",light.direction);
-		// backgroundShader.setVec3f("light.ambient",light.ambient);
-		// backgroundShader.setVec3f("light.diffuse",light.diffuse);
-		// backgroundShader.setVec3f("light.specular",light.specular);
-		// backgroundShader.setVec3f("background_color",background_color);
-		// glActiveTexture(GL_TEXTURE0);
-		// glBindTexture(GL_TEXTURE_2D, depthMap);
-		// glUniform1i(glGetUniformLocation(backgroundShader.ID, "shadowMap"), 0);
+		ourShader.setInt("object_id",object_id);
+
 		glBindVertexArray(bgVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6); // 12*3 indices starting at 0 -> 12 triangles	
 		glBindVertexArray(0);
 
-		
-		// DRAW VASE
-		// ourShader.use();
-		// ourShader.setMat4("view",View);
-		// ourShader.setMat4("projection",Projection);
-		// ourShader.setMat4("lightSpaceMatrix",lightSpaceMatrix);
-		// ourShader.setVec3f("light.direction",light.direction);
-		// ourShader.setVec3f("light.ambient",light.ambient);
-		// ourShader.setVec3f("light.diffuse",light.diffuse);
-		// ourShader.setVec3f("light.specular",light.specular);
 		ourShader.setMat4("model",Model);
 		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glUniform1i(glGetUniformLocation(ourShader.ID, "myTextureSampler"), 0);
-		// glActiveTexture(GL_TEXTURE1);
-		// glBindTexture(GL_TEXTURE_2D, depthMap);
-		// glUniform1i(glGetUniformLocation(ourShader.ID, "shadowMap"), 1);
+
 		glBindVertexArray(VertexArrayID);
-		glDrawArrays(GL_TRIANGLES, 0, 11700); 
-		// glDrawArrays(GL_TRIANGLES, 0, 382881); // 12*3 indices starting at 0 -> 12 triangles	
+		glDrawArrays(GL_TRIANGLES, 0, vertices_size); 
 		glBindVertexArray(0);
 	
 

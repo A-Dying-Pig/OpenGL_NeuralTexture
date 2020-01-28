@@ -18,6 +18,8 @@ in vec4 FragPosLightSpace;
 uniform sampler2D myTextureSampler;
 uniform Light light;
 uniform sampler2D shadowMap;
+uniform int object_id;
+
 
 
 // Ouput data
@@ -32,7 +34,12 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     projCoords = projCoords * 0.5 + 0.5; 
     float closestDepth = texture(shadowMap, projCoords.xy).r;   
     float currentDepth = projCoords.z;  
-    float shadow = currentDepth - 0.075 > closestDepth  ? 1.0 : 0.0;  
+    float shadow;
+    if (object_id == 0){
+        shadow = currentDepth - 0.075 > closestDepth  ? 1.0 : 0.0;  
+    }else if (object_id == 1){
+        shadow = currentDepth - 0.01 > closestDepth  ? 1.0 : 0.0;  
+    }
     return shadow;
 }
 

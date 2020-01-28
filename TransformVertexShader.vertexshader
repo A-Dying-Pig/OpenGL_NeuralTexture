@@ -27,6 +27,5 @@ void main(){
 	view_normal = (viewMat * vec4(vertex_normal, 0.0)).xyz;
 	fragpos = (VM * vec4(vertexPosition_modelspace,1)).xyz;
 	FragPosLightSpace = lightSpaceMatrix * vec4(vertexPosition_modelspace, 1.0);
-
 }
 
