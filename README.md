@@ -51,11 +51,11 @@ If you want to see the realtime rendered scene, in main.cpp line 37, set **enabl
 
 You may wonder why outputing the data will lead to the black screen (the only difference is to set enable_output = true/false). When not outputing data, the pixel data is directly written into screen. When outputing the data, the pixel data, uv, normals are written into video memories and the screen itself displays nothing. 
 
-### Additional Information
+## Additional Information
 
 This repository only serves as an example to render scene with OpenGL. It is not intended to be any OpenGL tutorial. Hence, the way to control this program is quite primitive ( I know nobody likes to go into C code and modify it). Sorry for any related trouble.
 
-If you are not satisfied with the scenes the program produce (such as the **motion of the camera**), you may need to modify more than one line in the program. I recommend that you first understand OpenGL. A good tutorial is https://learnopengl.com/. I am always happy when you use my code. Feel free to put up issues and discuss any problems you meet.
+If you are not satisfied with the scenes the program produce (such as the **motion of the camera**), you may need to modify more than one line in the program. I recommend that you first understand OpenGL. A good tutorial is https://learnopengl.com/ . Feel free to put up issues and discuss any problems you meet.
 
 
 ## Rendered scene example
