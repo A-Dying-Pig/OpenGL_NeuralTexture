@@ -37,7 +37,7 @@ The pixel data is stored in .png format. uv and normal are stored in .npz format
 
 ### Object models
 
-The repository includes two models - basketball and vase as shown in the folder. To change the model, in main.cpp line 40, set **object_id = 0** to load basketball or set **object_id = 1 ** to load vase. Then recompile and run the program.
+The repository includes two models - basketball and vase as shown in the folder. To change the model, in main.cpp line 40, set **object_id = 0** to load basketball or set **object_id = 1** to load vase. Then recompile and run the program.
 
 If you want to load your own model, the library included in the repository supports .obj format. You may need to understand how OpenGL and delve into code.
 
@@ -51,7 +51,7 @@ If you want to see the realtime rendered scene, in main.cpp line 37, set **enabl
 
 You may wonder why outputing the data will lead to the black screen (the only difference is to set enable_output = true/false). When not outputing data, the pixel data is directly written into screen. When outputing the data, the pixel data, uv, normals are written into video memories and the screen itself displays nothing. 
 
-##Additional Information
+### Additional Information
 
 This repository only serves as an example to render scene with OpenGL. It is not intended to be any OpenGL tutorial. Hence, the way to control this program is quite primitive ( I know nobody likes to go into C code and modify it). Sorry for any related trouble.
 
