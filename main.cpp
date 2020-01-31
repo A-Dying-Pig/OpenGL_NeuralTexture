@@ -39,9 +39,10 @@ int total_frame = 2000;
 glm::vec3 background_color = vec3(0.3f,0.3f,0.3f); 
 int object_id = 0; // 0 for basketball; 1 for vase
 
-char uv_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384Basketball60/uv/%04d.npy";
-char screenshot_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384Basketball60/frame/%04d.png";
-char view_normal_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384Basketball60/view_normal/%04d.npy";
+char uv_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384New/uv/%04d.npy";
+char screenshot_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384New/frame/%04d.png";
+char camera_extrinsics_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384New/extrinsics/%04d.npy";
+//char view_normal_output_dir[] = "/Volumes/Seagate Backup Plus Drive/512x384Basketball60/view_normal/%04d.npy";
 
 //Phone light
 struct Light {
@@ -135,6 +136,14 @@ void saveImageViewNormal(const char * filename){
 	cnpy::npy_save(filename,&data[0],{(unsigned long)viewport_height,(unsigned long)viewport_width,3},"w");
 	delete[] image_view_normal_data;
 }
+
+glm::vec3 saveCameraExtrinsics(const char * filename, glm::mat4 model, glm::vec3 cameraPos){
+	glm::vec3 extrinsics = normalize(vec3(model * glm::vec4(cameraPos,1.0)));
+	//std::cout<<"extrinsincs: "<< glm::to_string(extrinsics) << std::endl;
+	float data[] = {extrinsics.x,extrinsics.y,extrinsics.z};
+	cnpy::npy_save(filename,&data[0],{3},"w");
+}
+
 
 void saveImageUV(const char * filename){
 	GLfloat * image_uv_data = new GLfloat[viewport_height * viewport_width * 3];
@@ -540,8 +549,12 @@ int main( void )
 			saveImageUV(file_name);
 
 			//view normal
-			sprintf(file_name,view_normal_output_dir,z);
-			saveImageViewNormal(file_name);
+			//sprintf(file_name,view_normal_output_dir,z);
+			//saveImageViewNormal(file_name);
+
+			//camera extrinsincs
+			sprintf(file_name,camera_extrinsics_output_dir,z);
+			saveCameraExtrinsics(file_name,Model,vec3(camerapos));
 		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
